@@ -1,4 +1,61 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase-client'
+
 export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const supabase = createClient()
+      
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) throw signInError
+
+      // Check if user is admin
+      const { data: adminProfile, error: profileError } = await supabase
+        .from('admin_profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .eq('is_active', true)
+        .single()
+
+      if (profileError || !adminProfile) {
+        await supabase.auth.signOut()
+        throw new Error('Anda tidak memiliki akses admin')
+      }
+
+      // Update last login
+      await supabase
+        .from('admin_profiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', data.user.id)
+
+      // Redirect to dashboard
+      router.push('/dashboard')
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || 'Login gagal. Periksa email dan password Anda.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Pattern */}
@@ -44,7 +101,16 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="p-8">
-            <form className="space-y-6">
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-6">
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                   Email Address
@@ -58,8 +124,12 @@ export default function LoginPage() {
                   <input
                     type="email"
                     id="email"
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none bg-gray-50 focus:bg-white"
-                    placeholder="nama@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    required
+                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none bg-gray-50 focus:bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder="admin@fathussalafi.sch.id"
                   />
                 </div>
               </div>
@@ -77,7 +147,11 @@ export default function LoginPage() {
                   <input
                     type="password"
                     id="password"
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none bg-gray-50 focus:bg-white"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none bg-gray-50 focus:bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="••••••••"
                   />
                 </div>
@@ -85,7 +159,12 @@ export default function LoginPage() {
 
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" 
+                  />
                   <span className="text-sm text-gray-600 group-hover:text-gray-900">Ingat saya</span>
                 </label>
                 <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
@@ -95,12 +174,25 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 group"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                <span>Masuk</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Logging in...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Masuk</span>
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </>
+                )}
               </button>
             </form>
 

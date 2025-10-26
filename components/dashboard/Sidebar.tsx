@@ -1,10 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase-client'
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   const menuItems = [
     {
@@ -119,15 +128,15 @@ export default function DashboardSidebar() {
                   </svg>
                   Kembali ke Website
                 </Link>
-                <Link
-                  href="/login"
-                  className="group mt-2 flex gap-x-3 rounded-lg p-3 text-sm font-semibold leading-6 text-red-300 hover:bg-red-500/10 transition-all"
+                <button
+                  onClick={handleLogout}
+                  className="group w-full mt-2 flex gap-x-3 rounded-lg p-3 text-sm font-semibold leading-6 text-red-300 hover:bg-red-500/10 transition-all"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                   Logout
-                </Link>
+                </button>
               </li>
             </ul>
           </nav>

@@ -70,25 +70,25 @@ CREATE POLICY "Public can view published news"
   ON news FOR SELECT 
   USING (status = 'published' OR auth.uid() IS NOT NULL);
 
--- Admin/Staff/Principal bisa create
+-- Admin/Staff bisa create (Principal tidak ada di enum SIAKAD)
 CREATE POLICY "Admin/Staff can insert news" 
   ON news FOR INSERT 
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
-      AND role IN ('Admin', 'Staff', 'Principal')
+      AND role IN ('Admin', 'Staff')
     )
   );
 
--- Admin/Staff/Principal bisa update
+-- Admin/Staff bisa update
 CREATE POLICY "Admin/Staff can update news" 
   ON news FOR UPDATE 
   USING (
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
-      AND role IN ('Admin', 'Staff', 'Principal')
+      AND role IN ('Admin', 'Staff')
     )
   );
 
@@ -143,25 +143,25 @@ CREATE POLICY "Anyone can view galleries"
   ON galleries FOR SELECT 
   USING (true);
 
--- Admin/Staff/Principal bisa upload
+-- Admin/Staff bisa upload
 CREATE POLICY "Admin/Staff can insert galleries" 
   ON galleries FOR INSERT 
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
-      AND role IN ('Admin', 'Staff', 'Principal')
+      AND role IN ('Admin', 'Staff')
     )
   );
 
--- Admin/Staff/Principal bisa update
+-- Admin/Staff bisa update
 CREATE POLICY "Admin/Staff can update galleries" 
   ON galleries FOR UPDATE 
   USING (
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
-      AND role IN ('Admin', 'Staff', 'Principal')
+      AND role IN ('Admin', 'Staff')
     )
   );
 
@@ -252,14 +252,14 @@ CREATE POLICY "Users can view own registration"
     parent_email = (SELECT email FROM profiles WHERE id = auth.uid())
   );
 
--- Admin/Staff/Principal bisa lihat semua pendaftaran
+-- Admin/Staff bisa lihat semua pendaftaran
 CREATE POLICY "Admin/Staff can view all registrations" 
   ON ppdb_registrations FOR SELECT 
   USING (
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
-      AND role IN ('Admin', 'Staff', 'Principal')
+      AND role IN ('Admin', 'Staff')
     )
   );
 
@@ -268,14 +268,14 @@ CREATE POLICY "Anyone can insert registration"
   ON ppdb_registrations FOR INSERT 
   WITH CHECK (true);
 
--- Admin/Staff/Principal bisa update (untuk verifikasi)
+-- Admin/Staff bisa update (untuk verifikasi)
 CREATE POLICY "Admin/Staff can update registrations" 
   ON ppdb_registrations FOR UPDATE 
   USING (
     EXISTS (
       SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
-      AND role IN ('Admin', 'Staff', 'Principal')
+      AND role IN ('Admin', 'Staff')
     )
   );
 

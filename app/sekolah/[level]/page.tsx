@@ -2,19 +2,20 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 
 interface SchoolDetailProps {
-  params: {
+  params: Promise<{
     level: string
-  }
+  }>
 }
 
 export default async function SchoolDetailPage({ params }: SchoolDetailProps) {
+  const { level } = await params
   const supabase = await createClient()
   
   // Fetch school by level
   const { data: school, error } = await supabase
     .from('schools')
     .select('*')
-    .ilike('level', params.level)
+    .ilike('level', level)
     .single()
 
   if (error || !school) {

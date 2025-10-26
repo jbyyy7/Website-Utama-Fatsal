@@ -7,6 +7,7 @@ import SchoolsGrid from '@/components/home/SchoolsGrid'
 import NewsSection from '@/components/home/NewsSection'
 import GallerySection from '@/components/home/GallerySection'
 import PPDBBanner from '@/components/home/PPDBBanner'
+import PortalSection from '@/components/home/PortalSection'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -40,6 +41,9 @@ export default async function HomePage() {
 
       {/* Gallery Section */}
       <GallerySection />
+
+      {/* Portal Section - SIAKAD & LMS */}
+      <PortalSection />
 
       {/* PPDB Banner (Conditional) */}
       <PPDBBanner isActive={ppdbActive} academicYear={academicYear} />

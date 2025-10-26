@@ -1,10 +1,85 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase-client'
+
+interface Stats {
+  totalNews: number
+  totalGalleries: number
+  totalSchools: number
+  ppdbStatus: {
+    isActive: boolean
+    academicYear: string
+  }
+}
+
+interface RecentNews {
+  id: string
+  title: string
+  published_at: string
+  status: string
+}
+
 export default function DashboardPage() {
-  // TODO: Fetch real data from Supabase
-  const stats = [
+  const [stats, setStats] = useState<Stats>({
+    totalNews: 0,
+    totalGalleries: 0,
+    totalSchools: 0,
+    ppdbStatus: { isActive: false, academicYear: '-' }
+  })
+  const [recentNews, setRecentNews] = useState<RecentNews[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch stats in parallel
+      const [newsCount, galleriesCount, schoolsCount, ppdbSettings, latestNews] = await Promise.all([
+        supabase.from('news').select('id', { count: 'exact', head: true }),
+        supabase.from('galleries').select('id', { count: 'exact', head: true }),
+        supabase.from('schools').select('id', { count: 'exact', head: true }),
+        supabase.from('ppdb_settings').select('*').eq('is_active', true).single(),
+        supabase.from('news').select('id, title, published_at, status').order('created_at', { ascending: false }).limit(3)
+      ])
+
+      setStats({
+        totalNews: newsCount.count || 0,
+        totalGalleries: galleriesCount.count || 0,
+        totalSchools: schoolsCount.count || 0,
+        ppdbStatus: {
+          isActive: ppdbSettings.data?.is_active || false,
+          academicYear: ppdbSettings.data?.academic_year || '-'
+        }
+      })
+
+      setRecentNews(latestNews.data || [])
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Memuat data dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const statsData = [
     {
       title: 'Total Berita',
-      value: '24',
-      change: '+3 bulan ini',
+      value: stats.totalNews.toString(),
+      change: `${stats.totalNews} artikel`,
       icon: (
         <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
@@ -15,8 +90,8 @@ export default function DashboardPage() {
     },
     {
       title: 'Foto Galeri',
-      value: '156',
-      change: '+12 minggu ini',
+      value: stats.totalGalleries.toString(),
+      change: `${stats.totalGalleries} foto`,
       icon: (
         <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -27,7 +102,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Total Sekolah',
-      value: '5',
+      value: stats.totalSchools.toString(),
       change: 'Semua aktif',
       icon: (
         <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,8 +114,8 @@ export default function DashboardPage() {
     },
     {
       title: 'PPDB Status',
-      value: 'AKTIF',
-      change: '2024/2025',
+      value: stats.ppdbStatus.isActive ? 'AKTIF' : 'NONAKTIF',
+      change: stats.ppdbStatus.academicYear,
       icon: (
         <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -49,12 +124,6 @@ export default function DashboardPage() {
       bg: 'bg-orange-50',
       trend: 'active'
     }
-  ]
-
-  const recentNews = [
-    { title: 'Prestasi Juara 1 Olimpiade Matematika Tingkat Provinsi', date: '2024-10-20', status: 'published' },
-    { title: 'Kegiatan Manasik Haji Siswa MI Fathus Salafi', date: '2024-10-18', status: 'published' },
-    { title: 'Workshop Guru: Implementasi Kurikulum Merdeka', date: '2024-10-15', status: 'draft' }
   ]
 
   return (
@@ -67,7 +136,7 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
+        {statsData.map((stat, index) => (
           <div key={index} className={`${stat.bg} rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -94,20 +163,26 @@ export default function DashboardPage() {
             </a>
           </div>
           <div className="space-y-4">
-            {recentNews.map((news, index) => (
-              <div key={index} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">{news.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">{news.date}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${news.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {news.status === 'published' ? 'Published' : 'Draft'}
-                    </span>
+            {recentNews.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">Belum ada berita</p>
+            ) : (
+              recentNews.map((news, index) => (
+                <div key={index} className="flex items-start gap-3 pb-4 border-b border-gray-100 last:border-0">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">{news.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-gray-500">
+                        {news.published_at ? new Date(news.published_at).toLocaleDateString('id-ID') : 'Belum dipublikasi'}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${news.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {news.status === 'published' ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

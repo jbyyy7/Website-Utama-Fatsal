@@ -1,62 +1,82 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase-client'
+
+interface GalleryImage {
+  id: string
+  title: string
+  category: string
+  image_url: string
+  created_at: string
+  is_featured: boolean
+}
 
 export default function GalleryManagementPage() {
-  // TODO: Fetch from Supabase
-  const [images, setImages] = useState([
-    {
-      id: '1',
-      title: 'Upacara Bendera Senin Pagi',
-      category: 'kegiatan',
-      url: '/images/placeholder-1.jpg',
-      isFeatured: true,
-      uploadedAt: '2024-10-20'
-    },
-    {
-      id: '2',
-      title: 'Juara 1 Olimpiade Matematika',
-      category: 'prestasi',
-      url: '/images/placeholder-2.jpg',
-      isFeatured: true,
-      uploadedAt: '2024-10-19'
-    },
-    {
-      id: '3',
-      title: 'Lab Komputer MI Fathus Salafi',
-      category: 'fasilitas',
-      url: '/images/placeholder-3.jpg',
-      isFeatured: false,
-      uploadedAt: '2024-10-18'
-    },
-    {
-      id: '4',
-      title: 'Kegiatan Manasik Haji',
-      category: 'kegiatan',
-      url: '/images/placeholder-4.jpg',
-      isFeatured: false,
-      uploadedAt: '2024-10-17'
-    },
-    {
-      id: '5',
-      title: 'Perpustakaan Digital',
-      category: 'fasilitas',
-      url: '/images/placeholder-5.jpg',
-      isFeatured: false,
-      uploadedAt: '2024-10-16'
-    },
-    {
-      id: '6',
-      title: 'Lomba Tahfidz Nasional',
-      category: 'prestasi',
-      url: '/images/placeholder-6.jpg',
-      isFeatured: true,
-      uploadedAt: '2024-10-15'
-    }
-  ])
-
+  const supabase = createClient()
+  const [images, setImages] = useState<GalleryImage[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  useEffect(() => {
+    fetchGallery()
+  }, [])
+
+  const fetchGallery = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setImages(data || [])
+    } catch (error) {
+      console.error('Error fetching gallery:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Yakin ingin menghapus foto ini?')) return
+
+    try {
+      const { error } = await supabase
+        .from('gallery')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setImages(images.filter(item => item.id !== id))
+      alert('Foto berhasil dihapus!')
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      alert('Gagal menghapus foto')
+    }
+  }
+
+  const toggleFeatured = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('gallery')
+        .update({ is_featured: !currentStatus })
+        .eq('id', id)
+
+      if (error) throw error
+
+      setImages(images.map(item => 
+        item.id === id 
+          ? { ...item, is_featured: !currentStatus }
+          : item
+      ))
+    } catch (error) {
+      console.error('Error toggling featured:', error)
+      alert('Gagal mengubah status featured')
+    }
+  }
 
   const filteredImages = filter === 'all' 
     ? images 
@@ -69,6 +89,14 @@ export default function GalleryManagementPage() {
       fasilitas: 'bg-blue-100 text-blue-700'
     }
     return styles[category as keyof typeof styles] || 'bg-gray-100 text-gray-700'
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
   }
 
   return (
@@ -94,23 +122,23 @@ export default function GalleryManagementPage() {
           <div className="text-2xl font-bold text-gray-800">{images.length}</div>
           <div className="text-sm text-gray-500">Total Foto</div>
         </div>
-        <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
-          <div className="text-2xl font-bold text-yellow-700">
-            {images.filter(i => i.category === 'prestasi').length}
+        <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+          <div className="text-2xl font-bold text-purple-700">
+            {images.filter(g => g.is_featured).length}
+          </div>
+          <div className="text-sm text-gray-600">Featured</div>
+        </div>
+        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="text-2xl font-bold text-blue-700">
+            {images.filter(g => g.category === 'prestasi').length}
           </div>
           <div className="text-sm text-gray-600">Prestasi</div>
         </div>
         <div className="bg-green-50 rounded-xl p-4 border border-green-100">
           <div className="text-2xl font-bold text-green-700">
-            {images.filter(i => i.category === 'kegiatan').length}
+            {images.filter(g => g.category === 'kegiatan').length}
           </div>
           <div className="text-sm text-gray-600">Kegiatan</div>
-        </div>
-        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-          <div className="text-2xl font-bold text-blue-700">
-            {images.filter(i => i.isFeatured).length}
-          </div>
-          <div className="text-sm text-gray-600">Featured</div>
         </div>
       </div>
 
@@ -165,13 +193,21 @@ export default function GalleryManagementPage() {
           {filteredImages.map((image) => (
             <div key={image.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
               <div className="relative aspect-[4/3] bg-gray-200 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center">
-                  <svg className="w-16 h-16 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
+                {image.image_url ? (
+                  <img 
+                    src={image.image_url} 
+                    alt={image.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center">
+                    <svg className="w-16 h-16 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
                 
-                {image.isFeatured && (
+                {image.is_featured && (
                   <div className="absolute top-3 left-3 bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -182,10 +218,13 @@ export default function GalleryManagementPage() {
 
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <div className="flex gap-2">
-                    <button className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors">
-                      <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <button 
+                      onClick={() => toggleFeatured(image.id, image.is_featured)}
+                      className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                      title={image.is_featured ? 'Unfeature' : 'Set as Featured'}
+                    >
+                      <svg className="w-5 h-5 text-yellow-500" fill={image.is_featured ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                       </svg>
                     </button>
                     <button className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors">
@@ -193,7 +232,10 @@ export default function GalleryManagementPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
-                    <button className="p-3 bg-red-500 rounded-full hover:bg-red-600 transition-colors">
+                    <button 
+                      onClick={() => handleDelete(image.id)}
+                      className="p-3 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                    >
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -209,7 +251,7 @@ export default function GalleryManagementPage() {
                     {image.category}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {new Date(image.uploadedAt).toLocaleDateString('id-ID')}
+                    {new Date(image.created_at).toLocaleDateString('id-ID')}
                   </span>
                 </div>
               </div>
@@ -233,7 +275,15 @@ export default function GalleryManagementPage() {
               {filteredImages.map((image) => (
                 <tr key={image.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 rounded-lg"></div>
+                    {image.image_url ? (
+                      <img 
+                        src={image.image_url} 
+                        alt={image.title}
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-400 rounded-lg"></div>
+                    )}
                   </td>
                   <td className="px-6 py-4 font-medium text-gray-800">{image.title}</td>
                   <td className="px-6 py-4">
@@ -242,23 +292,35 @@ export default function GalleryManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    {image.isFeatured && (
+                    {image.is_featured && (
                       <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
                         Featured
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(image.uploadedAt).toLocaleDateString('id-ID')}
+                    {new Date(image.created_at).toLocaleDateString('id-ID')}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => toggleFeatured(image.id, image.is_featured)}
+                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg"
+                        title={image.is_featured ? 'Unfeature' : 'Set as Featured'}
+                      >
+                        <svg className="w-5 h-5" fill={image.is_featured ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      </button>
                       <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
-                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                      <button 
+                        onClick={() => handleDelete(image.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>

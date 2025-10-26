@@ -1,3 +1,4 @@
+import { createClient } from '@/lib/supabase-server'
 import Navbar from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import HeroSection from '@/components/home/HeroSection'
@@ -7,10 +8,18 @@ import NewsSection from '@/components/home/NewsSection'
 import GallerySection from '@/components/home/GallerySection'
 import PPDBBanner from '@/components/home/PPDBBanner'
 
-export default function HomePage() {
-  // TODO: Fetch from Supabase database - managed by admin dashboard
-  const ppdbActive = true // From ppdb_settings table
-  const academicYear = "2024/2025" // From ppdb_settings table
+export default async function HomePage() {
+  const supabase = await createClient()
+  
+  // Fetch PPDB settings from database
+  const { data: ppdbSettings } = await supabase
+    .from('ppdb_settings')
+    .select('is_active, academic_year')
+    .eq('is_active', true)
+    .single()
+  
+  const ppdbActive = ppdbSettings?.is_active || false
+  const academicYear = ppdbSettings?.academic_year || new Date().getFullYear() + '/' + (new Date().getFullYear() + 1)
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">

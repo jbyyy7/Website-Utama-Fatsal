@@ -1,34 +1,81 @@
-// TODO: Fetch from Supabase database
-// This is demo data - will be replaced with real data from admin panel
+'use client'
 
-const newsArticles = [
-  {
-    id: 1,
-    title: 'Siswa MA Fathus Salafi Raih Juara 1 Olimpiade Sains Nasional',
-    excerpt: 'Prestasi membanggakan dari siswa MA Fathus Salafi yang berhasil meraih juara 1 dalam Olimpiade Sains Nasional tingkat SMA/MA...',
-    image_url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop',
-    category: 'prestasi',
-    published_at: '2025-01-15',
-  },
-  {
-    id: 2,
-    title: 'Kegiatan Pesantren Kilat Ramadhan 1446 H',
-    excerpt: 'Yayasan Fathus Salafi mengadakan kegiatan Pesantren Kilat selama bulan Ramadhan dengan berbagai kegiatan menarik...',
-    image_url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&h=600&fit=crop',
-    category: 'kegiatan',
-    published_at: '2025-01-10',
-  },
-  {
-    id: 3,
-    title: 'Pembukaan Tahun Ajaran Baru 2024/2025',
-    excerpt: 'Upacara pembukaan tahun ajaran baru 2024/2025 dilaksanakan dengan khidmat dan penuh semangat dari seluruh sivitas akademika...',
-    image_url: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&h=600&fit=crop',
-    category: 'berita',
-    published_at: '2024-07-15',
-  },
-]
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase-client'
+
+interface NewsArticle {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  image_url: string | null
+  category: 'berita' | 'prestasi' | 'kegiatan'
+  published_at: string
+}
 
 export default function NewsSection() {
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    fetchNews()
+  }, [])
+
+  const fetchNews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('news')
+        .select('id, title, slug, excerpt, image_url, category, published_at')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(3)
+
+      if (error) throw error
+
+      setNewsArticles(data || [])
+    } catch (error) {
+      console.error('Error fetching news:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+            <p className="mt-4 text-gray-600">Memuat berita...</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (newsArticles.length === 0) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-block px-4 py-2 bg-orange-100 text-orange-600 rounded-full text-sm font-semibold mb-4">
+              Berita & Prestasi
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800">
+              Info Terkini
+            </h2>
+          </div>
+          <div className="text-center py-12 bg-gray-50 rounded-2xl">
+            <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+            <p className="text-gray-500">Belum ada berita yang dipublikasikan</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +102,7 @@ export default function NewsSection() {
               {/* Image */}
               <div className="relative h-48 overflow-hidden bg-gray-200">
                 <img 
-                  src={article.image_url} 
+                  src={article.image_url || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop'} 
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />

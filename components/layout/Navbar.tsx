@@ -1,215 +1,41 @@
-'use client'
+interface NavbarProps {
+  ppdbActive: boolean
+}
 
-import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { useState } from 'react'
-
-export function Navbar() {
-  const { user, profile, signOut } = useAuth()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  const handleLogout = async () => {
-    await signOut()
-    window.location.href = '/'
-  }
-
+export default function Navbar({ ppdbActive }: NavbarProps) {
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/70 border-b border-white/20 shadow-lg">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="text-2xl font-heading font-bold text-primary-600">
+          <a href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">F</span>
+            </div>
+            <div>
+              <div className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Yayasan Fathus Salafi
               </div>
-            </Link>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex space-x-6">
-              <Link 
-                href="/"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                Beranda
-              </Link>
-              <Link 
-                href="/tentang"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                Tentang Kami
-              </Link>
-              <Link 
-                href="/sekolah"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                Sekolah
-              </Link>
-              <Link 
-                href="/ppdb"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                PPDB
-              </Link>
-              <Link 
-                href="/berita"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                Berita
-              </Link>
-              <Link 
-                href="/kontak"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                Kontak
-              </Link>
-              
-              {/* Links to other systems */}
-              <a 
-                href="https://siakad.yayasan-fatsal.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                SIAKAD
-              </a>
-              <a 
-                href="https://lms.yayasan-fatsal.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-700 hover:text-primary-500 transition-colors font-medium"
-              >
-                LMS
-              </a>
+              <div className="text-xs text-gray-500">Pendidikan Islami Berkualitas</div>
             </div>
-          </div>
-          
-          {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
-            {user ? (
-              <>
-                <span className="text-sm text-gray-600">
-                  Halo, <span className="font-semibold">{profile?.full_name || user.email}</span>
-                </span>
-                <Link href="/dashboard">
-                  <Button variant="outline" size="sm">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="outline" size="sm">
-                    Login
-                  </Button>
-                </Link>
-                <Link href="/ppdb">
-                  <Button size="sm">
-                    Daftar Sekarang
-                  </Button>
-                </Link>
-              </>
+          </a>
+
+          <div className="hidden md:flex items-center gap-1">
+            <a href="/" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Beranda</a>
+            <a href="/tentang" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Tentang</a>
+            <a href="/berita" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Berita</a>
+            <a href="/galeri" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Galeri</a>
+            {ppdbActive && (
+              <a href="/ppdb" className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium">PPDB</a>
             )}
+            <a href="/login" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Login</a>
           </div>
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
+          <button className="md:hidden p-2 rounded-lg hover:bg-white/50 transition-colors">
+            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
-
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t">
-            <div className="flex flex-col space-y-3">
-              <Link href="/" className="text-gray-700 hover:text-primary-500 py-2">
-                Beranda
-              </Link>
-              <Link href="/tentang" className="text-gray-700 hover:text-primary-500 py-2">
-                Tentang Kami
-              </Link>
-              <Link href="/sekolah" className="text-gray-700 hover:text-primary-500 py-2">
-                Sekolah
-              </Link>
-              <Link href="/ppdb" className="text-gray-700 hover:text-primary-500 py-2">
-                PPDB
-              </Link>
-              <Link href="/berita" className="text-gray-700 hover:text-primary-500 py-2">
-                Berita
-              </Link>
-              <Link href="/kontak" className="text-gray-700 hover:text-primary-500 py-2">
-                Kontak
-              </Link>
-              <a 
-                href="https://siakad.yayasan-fatsal.com"
-                className="text-gray-700 hover:text-primary-500 py-2"
-              >
-                SIAKAD
-              </a>
-              <a 
-                href="https://lms.yayasan-fatsal.com"
-                className="text-gray-700 hover:text-primary-500 py-2"
-              >
-                LMS
-              </a>
-              
-              {user ? (
-                <>
-                  <Link href="/dashboard" className="pt-4">
-                    <Button variant="outline" className="w-full">
-                      Dashboard
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" className="w-full" onClick={handleLogout}>
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" className="pt-4">
-                    <Button variant="outline" className="w-full">
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/ppdb">
-                    <Button className="w-full">
-                      Daftar Sekarang
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   )

@@ -21,11 +21,14 @@ export default function Navbar({ ppdbActive }: NavbarProps) {
 
           <div className="hidden md:flex items-center gap-1">
             <a href="/" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Beranda</a>
-            <a href="/tentang" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Tentang</a>
-            <a href="/berita" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Berita</a>
-            <a href="/galeri" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Galeri</a>
+            <a href="/#sekolah" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Sekolah</a>
+            <a href="/#berita" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Berita</a>
+            <a href="/#galeri" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Galeri</a>
             {ppdbActive && (
-              <a href="/ppdb" className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium">PPDB</a>
+              <>
+                <a href="/ppdb" className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all duration-300 font-medium">Daftar PPDB</a>
+                <a href="/ppdb/status" className="px-4 py-2 rounded-lg border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-300 font-medium">Cek Status</a>
+              </>
             )}
             <a href="/login" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Login</a>
           </div>

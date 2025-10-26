@@ -27,24 +27,23 @@ export default function LoginPage() {
 
       if (signInError) throw signInError
 
-      // Check if user is admin
-      const { data: adminProfile, error: profileError } = await supabase
-        .from('admin_profiles')
-        .select('*')
+      // Check if user is admin or staff (from SIAKAD profiles table)
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, full_name')
         .eq('id', data.user.id)
-        .eq('is_active', true)
         .single()
 
-      if (profileError || !adminProfile) {
+      if (profileError || !profile) {
         await supabase.auth.signOut()
-        throw new Error('Anda tidak memiliki akses admin')
+        throw new Error('Profil tidak ditemukan')
       }
 
-      // Update last login
-      await supabase
-        .from('admin_profiles')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', data.user.id)
+      // Only allow Admin and Staff to access dashboard
+      if (!['Admin', 'Staff'].includes(profile.role)) {
+        await supabase.auth.signOut()
+        throw new Error('Anda tidak memiliki akses admin. Role Anda: ' + profile.role)
+      }
 
       // Redirect to dashboard
       router.push('/dashboard')

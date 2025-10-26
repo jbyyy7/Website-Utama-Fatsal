@@ -64,15 +64,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Check if user is admin
-    const { data: adminProfile } = await supabase
-      .from('admin_profiles')
-      .select('*')
+    // Check if user is admin/staff (from SIAKAD profiles table)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
       .eq('id', user.id)
-      .eq('is_active', true)
       .single()
 
-    if (!adminProfile) {
+    if (!profile || !['Admin', 'Staff'].includes(profile.role)) {
       return NextResponse.redirect(new URL('/login?error=unauthorized', request.url))
     }
   }

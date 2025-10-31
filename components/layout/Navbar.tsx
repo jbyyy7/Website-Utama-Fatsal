@@ -21,7 +21,7 @@ export default function Navbar({ ppdbActive }: NavbarProps) {
 
           <div className="hidden md:flex items-center gap-1">
             <a href="/" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Beranda</a>
-            <a href="/#sekolah" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Sekolah</a>
+            <a href="/sekolah" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Sekolah</a>
             <a href="/#berita" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Berita</a>
             <a href="/#galeri" className="px-4 py-2 rounded-lg text-gray-700 hover:bg-white/50 hover:text-blue-600 transition-all duration-300 font-medium">Galeri</a>
             {ppdbActive && (

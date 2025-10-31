@@ -31,16 +31,24 @@ export default async function HomePage() {
       <HeroSection ppdbActive={ppdbActive} academicYear={academicYear} />
 
       {/* About Section - Visi, Misi, Nilai */}
-      <AboutSection />
+      <div id="tentang">
+        <AboutSection />
+      </div>
 
       {/* Schools Grid - 5 Lembaga */}
-      <SchoolsGrid />
+      <div id="sekolah">
+        <SchoolsGrid />
+      </div>
 
       {/* News/Prestasi/Kegiatan Section */}
-      <NewsSection />
+      <div id="berita">
+        <NewsSection />
+      </div>
 
       {/* Gallery Section */}
-      <GallerySection />
+      <div id="galeri">
+        <GallerySection />
+      </div>
 
       {/* Portal Section - SIAKAD & LMS */}
       <PortalSection />
